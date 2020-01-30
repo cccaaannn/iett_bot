@@ -65,8 +65,8 @@ while(True):
     # ---------------------------check mailbox for commands---------------------------------------------------------
 
     result, subject, sender = receive_mail(server_outgoing, automail_username, automail_password)
-
-    if(result and sender == receiver_mail):
+    
+    if(result and receiver_mail in sender):
         if(subject == "evdeyim"):
             iett_bot.set_stop("dereboyu_sehit_batuhan_ergin")
             bus_30d = iett_bot.find_me_buses("30d")
