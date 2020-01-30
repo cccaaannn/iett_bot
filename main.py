@@ -1,67 +1,120 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options  
+import datetime
+from time import sleep
+
+from mail_functions import send_mail, receive_mail
+from iett_bot import iett_bot
 
 
-path = "C:\\Users\\can\\ProjectDependencies\\driver\\chromedriver.exe"
+
+# set up mail stuff
+automail_username = ""
+automail_password = ""
+
+server_incoming = "imap.gmail.com"
+server_outgoing = "smtp.gmail.com"
+
+receiver_mail = ""
+
+
+driver_path = "C:\\Users\\can\\ProjectDependencies\\driver\\chromedriver.exe"
+
+iett_bot = iett_bot(driver_path, options=["--headless","--no-sandbox","--disable-dev-shm-usage"])
 
 
 
-class bot():
-    def __init__(self,driver_path, options = ["--headless"]):
-        self.driver_path = driver_path
-        self.options =options
+def list_to_str(buses):
+    str_buses = buses[0]["stop name"] + "\n\n"
+    for index, bus in enumerate(buses):
+        str_buses += "{0} -> {1} {2} {3}\n".format(index, bus["bus code"], bus["arriving time"], bus["remaining time"] )
+    return str_buses
 
-        self.init_driver(self.driver_path, self.options)
+
+
+# set up parameters
+remind_hour = 5
+remind_minute = 30 
+waiting_interval = 10
+send_flag = False
+while(True):
+    
+    # ---------------------------send daily reminder mail and delete temps--------------------------------------------
+    now = datetime.datetime.now()
+    time_to_send = now.replace(hour=remind_hour, minute=remind_minute, second=0, microsecond=0)
+    # print(now)
+
+    if(now > time_to_send and not send_flag):
+        send_flag = True
+
+        subject = "bus times " + datetime.datetime.strftime(now,"%d/%m/%y")
+
+        iett_bot.set_stop("dereboyu_sehit_batuhan_ergin")
+        bus_30d = iett_bot.find_me_buses("30d")
+        bus_dt2 = iett_bot.find_me_buses("dt2")
+        buses = bus_dt2 + bus_30d
+        str_buses = list_to_str(buses)
+
+        send_mail(server_incoming, automail_username, automail_password, receiver_mail, subject, str_buses)
+
+    elif(time_to_send > now):
+        send_flag = False
+        subject = ""
+    
+    # -------------------------------------------------------------------------------------------------------------
+
+
+    # ---------------------------check mailbox for commands---------------------------------------------------------
+
+    result, subject, sender = receive_mail(server_outgoing, automail_username, automail_password)
+
+    if(result and sender == receiver_mail):
+        if(subject == "evdeyim"):
+            iett_bot.set_stop("dereboyu_sehit_batuhan_ergin")
+            bus_30d = iett_bot.find_me_buses("30d")
+            bus_dt2 = iett_bot.find_me_buses("dt2")
+            buses = bus_dt2 + bus_30d
+            str_buses = list_to_str(buses)
+
+            send_mail(server_incoming, automail_username, automail_password, receiver_mail, "buses", str_buses)
+        
+        elif(subject == "okuldayim"):
+            iett_bot.set_stop("besiktas_bahcesehir_universitesi")
+            bus_30d = iett_bot.find_me_buses("30d")
+            bus_dt1 = iett_bot.find_me_buses("dt1")   
+            buses = bus_dt1 + bus_30d
+            str_buses = list_to_str(buses)
+            send_mail(server_incoming, automail_username, automail_password, receiver_mail, "buses", str_buses)
+        
+        elif(subject == "all_buses"):
+            all_buses = iett_bot.give_me_all_buses()
+            str_buses = list_to_str(all_buses)
+            send_mail(server_incoming, automail_username, automail_password, receiver_mail, "all buses", str_buses)
         
 
-    def init_driver(self,driver_path, options):
-        self.set_driver_options(options)
-        self.driver = webdriver.Chrome(executable_path=driver_path, options=self.chrome_options)
-
-    def set_driver_options(self,options):
-        self.chrome_options = Options()  
-        if(options):
-            for option in options:
-                self.chrome_options.add_argument(option)
-        
-    def get_url(self, url):
-        self.driver.get(url)
-
-    def get_trs(self):
-        body = self.driver.find_element_by_tag_name("tbody")
-        trs = body.find_elements_by_tag_name("tr")
-        return trs
-
-    def find_me_bus(self, bus_code):
-        bus_code = bus_code.lower()
-
-        body = self.driver.find_element_by_tag_name("tbody")
-        trs = body.find_elements_by_tag_name("tr")
-        buses = []
-        for tr in trs:
-            found_buss_code = tr.find_element_by_tag_name("mark").text.lower()
-            if(found_buss_code == bus_code):
-                arriving_time = tr.find_element_by_class_name("varissaati").text
-                remaining_time = tr.find_element_by_class_name("td_LineEstimated").text[8:]
-                bus = {"bus code":found_buss_code,"arriving time":arriving_time,"remaining time":remaining_time}
-                buses.append(bus)
-                print("!!!buss found!!!")
-
-        return buses
+        elif(subject == "info"):
+            subject = "commands\nevdeyim okuldayim info time:"
+            send_mail(server_incoming, automail_username, automail_password, receiver_mail, "all commands", subject)
         
 
+        elif(subject[0:5] == "time:"):
+            try:
+                new_reminder_time = datetime.datetime.strptime(subject[5:], '%H:%M')
+                subject = "reminder time changed to {}:{}".format(new_reminder_time.hour,new_reminder_time.minute)
+                remind_hour = int(new_reminder_time.hour)
+                remind_minute = int(new_reminder_time.minute)
+                send_mail(server_incoming, automail_username, automail_password, receiver_mail, subject, "")
+            except:
+                subject = "command error"
+                send_mail(server_incoming, automail_username, automail_password, receiver_mail, subject, "")
 
-bot = bot(path,options=["--headless","--no-sandbox","--disable-dev-shm-usage"])
-bot.get_url("https://www.iett.istanbul/tr/main/duraklar/114962/BE%C5%9E%C4%B0KTA%C5%9E%20B.%C3%9CN%C4%B0VERS%C4%B0T-%C4%B0ETT-Duraktan-Ge%C3%A7en-Hatlar-Durak-Bilgileri-Hatt%C4%B1n-Duraktan-Ge%C3%A7i%C5%9F-Saatleri")
+        else:
+             send_mail(server_incoming, automail_username, automail_password, receiver_mail, "unknown command received", "")
 
-bus_30d = bot.find_me_bus("30d")
-bus_dt1 = bot.find_me_bus("dt1")
 
-from extprint import printlist
+        #check the mailbox until it is empty
+        continue
 
-printlist(bus_30d)
-printlist(bus_dt1)
+    sleep(waiting_interval)
 
+    # -------------------------------------------------------------------------------------------------------------
 
 
