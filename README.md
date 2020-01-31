@@ -1,3 +1,3 @@
 ## iett bot
 
-- **mails you buss times**
+- **mails you bus times**

@@ -1,5 +1,6 @@
 import datetime
 from time import sleep
+import getpass
 
 from mail_functions import send_mail, receive_mail
 from iett_bot import iett_bot
@@ -8,7 +9,7 @@ from iett_bot import iett_bot
 
 # set up mail stuff
 automail_username = ""
-automail_password = ""
+automail_password = getpass.getpass()
 
 server_incoming = "imap.gmail.com"
 server_outgoing = "smtp.gmail.com"
@@ -85,6 +86,7 @@ while(True):
             send_mail(server_incoming, automail_username, automail_password, receiver_mail, "buses", str_buses)
         
         elif(subject == "all_buses"):
+            iett_bot.set_stop("besiktas_bahcesehir_universitesi")
             all_buses = iett_bot.give_me_all_buses()
             str_buses = list_to_str(all_buses)
             send_mail(server_incoming, automail_username, automail_password, receiver_mail, "all buses", str_buses)
