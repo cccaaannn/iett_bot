@@ -1,4 +1,5 @@
 ## iett bot
 
-- **mails you bus times**
-- **telegram bot for bus times**
+- **pulls bus times from iett site**
+- **mail example for receiving bus times as mail**
+- **telegram example for receiving bus times as telegram message** 
