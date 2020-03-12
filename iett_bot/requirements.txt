@@ -1,0 +1,5 @@
+selenium
+python-telegram-bot
+requests
+BeautifulSoup4
+extprint
