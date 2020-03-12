@@ -1,0 +1,4 @@
+selenium
+python-telegram-bot
+requests
+BeautifulSoup4
