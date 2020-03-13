@@ -3,10 +3,10 @@ from time import sleep
 import getpass
 
 from mail_functions import send_mail, receive_mail
-# from iett_bot import iett_bot
+
 import sys
-sys.path.append(".")
-from iett_bot.iett_bot import iett_bot
+sys.path.insert(0, 'iett_bot')
+from iett_bot_requests import iett_bot_requests
 
 
 # set up mail stuff
@@ -19,17 +19,7 @@ server_outgoing = "smtp.gmail.com"
 receiver_mail = ""
 
 
-driver_path = "C:\\Users\\can\\ProjectDependencies\\driver\\chromedriver.exe"
-
-iett_bot = iett_bot(driver_path, options=["--headless","--no-sandbox","--disable-dev-shm-usage"])
-
-
-
-def list_to_str(buses):
-    str_buses = buses[0]["stop name"] + "\n\n"
-    for index, bus in enumerate(buses):
-        str_buses += "{0} -> {1} {2} {3}\n".format(index, bus["bus code"], bus["arriving time"], bus["remaining time"] )
-    return str_buses
+iett_bot = iett_bot_requests()
 
 
 
@@ -54,7 +44,7 @@ while(True):
         bus_30d = iett_bot.find_me_buses("30d")
         bus_dt2 = iett_bot.find_me_buses("dt2")
         buses = bus_dt2 + bus_30d
-        str_buses = list_to_str(buses)
+        str_buses = iett_bot.list_to_str(buses)
 
         send_mail(server_incoming, automail_username, automail_password, receiver_mail, subject, str_buses)
 
@@ -75,7 +65,7 @@ while(True):
             bus_30d = iett_bot.find_me_buses("30d")
             bus_dt2 = iett_bot.find_me_buses("dt2")
             buses = bus_dt2 + bus_30d
-            str_buses = list_to_str(buses)
+            str_buses = iett_bot.list_to_str(buses)
 
             send_mail(server_incoming, automail_username, automail_password, receiver_mail, "buses", str_buses)
         
@@ -84,13 +74,13 @@ while(True):
             bus_30d = iett_bot.find_me_buses("30d")
             bus_dt1 = iett_bot.find_me_buses("dt1")   
             buses = bus_dt1 + bus_30d
-            str_buses = list_to_str(buses)
+            str_buses = iett_bot.list_to_str(buses)
             send_mail(server_incoming, automail_username, automail_password, receiver_mail, "buses", str_buses)
         
         elif(subject == "all_buses"):
             iett_bot.set_stop("besiktas_bahcesehir_universitesi")
             all_buses = iett_bot.give_me_all_buses()
-            str_buses = list_to_str(all_buses)
+            str_buses = iett_bot.list_to_str(all_buses)
             send_mail(server_incoming, automail_username, automail_password, receiver_mail, "all buses", str_buses)
         
 

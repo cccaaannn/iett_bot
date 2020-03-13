@@ -1,10 +1,10 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from my_bot_key import botkey
-# from iett_bot import iett_bot
-import sys
-sys.path.append(".")
-from iett_bot.iett_bot import iett_bot
 
+import sys
+sys.path.insert(0, 'iett_bot')
+from iett_bot_requests import iett_bot_requests
+from iett_bot_selenium import iett_bot_selenium
 
 
 def __set_logger(logger_name, log_file, verbose):
@@ -132,9 +132,10 @@ def hop(update, context):
 
 
 driver_path = "C:\\Users\\can\\ProjectDependencies\\driver\\chromedriver.exe"
-iett_bot = iett_bot(driver_path, options=["--headless","--no-sandbox","--disable-dev-shm-usage"])
+# iett_bot = iett_bot_selenium(driver_path, options=["--headless","--no-sandbox","--disable-dev-shm-usage"])
+iett_bot = iett_bot_requests()
 
-logger = __set_logger(__name__, "iett_bot/telegram_example/log/telegram.log", 3)
+logger = __set_logger(__name__, "telegram_example/log/telegram.log", 3)
 
 
 updater = Updater(botkey, use_context=True)
